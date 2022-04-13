@@ -30,15 +30,17 @@ end
 
 ;;Configuración de la lógica del programa
 to play
-  ;;add.Condición de paro
+
   infectar-humanos
   infectar-mosquitos
 
-  generar_mosquitos
   tick  ;;Avanzamos en el tiempo
 
   actualizar-mosquitos
   actualizar-humanos
+
+  if count mosquitos with [ infectado ] = 0 and count humanos with [ infectado ] = 0
+    [ stop ]
 
 end
 
@@ -83,6 +85,7 @@ to generar_mosquitos
   set n_dias 10 + random 5
   set shape "mosquito"
   set color gray]
+  ;;generar_infectados
 end
 
 to generar_infectados
@@ -94,22 +97,28 @@ to generar_infectados
 end
 
 to actualizar-humanos
-  ;; Actualiza a los humanos en el espacio
-  ask humanos[
-    fd random 20
-    lt random 90
-    if infectado
+  ask humanos-infectados
+  [
+    set n_infeccion n_infeccion - 1
+    if n_infeccion < 0
     [
-      set n_infeccion n_infeccion - 1
-      if n_infeccion < 0
-      [
-        set infectado False
-        set n_infeccion 0
-        set n_inmunidad 30
-      ]
+      set infectado False
+      set color green
+      set n_inmunidad 30
     ]
-    if n_inmunidad > 0 [ set n_inmunidad n_inmunidad - 1]
-     ]
+  ]
+
+  ask humanos with [n_inmunidad > 0]
+  [
+    set n_inmunidad n_inmunidad - 1
+  ]
+
+  ask humanos
+  [
+    lt random 90
+    fd random 20
+  ]
+
 end
 
 to actualizar-mosquitos
@@ -119,6 +128,8 @@ to actualizar-mosquitos
     set n_dias n_dias - 1
     fd random 2   ;;Con 0.2 no vi movimiento en los mosquitos
     rt random 90 ]
+
+  generar_mosquitos
 end
 
 to infectar-mosquitos
@@ -153,6 +164,14 @@ to infectar-humanos
     ]
   ]
 
+end
+
+to verificar-infectados
+  if count mosquitos with [ infectado ] = 0
+  [
+    if count humanos with [ infectado ] = 0
+    [ stop ]
+  ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -274,7 +293,7 @@ max_mos
 max_mos
 0
 50
-20.0
+26.0
 1
 1
 NIL
@@ -288,17 +307,17 @@ SLIDER
 init_mosquitos
 init_mosquitos
 0
-100
-100.0
+1000
+382.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-956
+896
 600
-1035
+975
 645
 Mosquitos
 count mosquitos
@@ -315,16 +334,16 @@ init_humanos
 init_humanos
 0
 100
-60.0
+67.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-1187
+1136
 601
-1259
+1208
 646
 Humanos
 count humanos
@@ -340,12 +359,34 @@ SLIDER
 init_infectados
 init_infectados
 0
-10
-10.0
+100
+99.0
 1
 1
 NIL
 HORIZONTAL
+
+MONITOR
+1001
+599
+1093
+644
+Mosquitos Inf
+count mosquitos with [ color = red ]
+17
+1
+11
+
+MONITOR
+1232
+603
+1331
+648
+Humanos Inf
+count humanos with [infectado]
+17
+1
+11
 
 @#$#@#$#@
 ## Modelo epidemiológico
@@ -369,7 +410,6 @@ Cada día es un tick
 ## ¿Cómo usarlo?
 
 Configure con las barras los parámetro iniciales del modelo, de clic en setup y de clic en play
-
 
 @#$#@#$#@
 default
